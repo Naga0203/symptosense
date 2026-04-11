@@ -7,9 +7,9 @@ backend/.env
 frontend/.env
 **/.env
 # Keep .env.example files (these should be committed as templates)
-!.env.example
-!backend/.env.example
-!frontend/.env.example
+.env.example
+backend/.env.example
+frontend/.env.example
 
 # Firebase credentials (IMPORTANT: Never commit!)
 firebase-credentials.json
