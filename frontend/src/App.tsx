@@ -6,6 +6,7 @@ import History from './pages/History';
 import ReportAnalysis from './pages/ReportAnalysis';
 import Profile from './pages/Profile';
 import Diseases from './pages/Diseases';
+import TreatmentExploration from './pages/TreatmentExploration';
 import Layout from './components/Layout';
 import Auth from './pages/Auth';
 
@@ -21,6 +22,7 @@ function App() {
         <Route path="/diseases" element={<Layout><Diseases /></Layout>} />
         <Route path="/history" element={<Layout><History /></Layout>} />
         <Route path="/profile" element={<Layout><Profile /></Layout>} />
+        <Route path="/:diseaseName/treatment-exploration" element={<Layout><TreatmentExploration /></Layout>} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
@@ -28,4 +30,3 @@ function App() {
 }
 
 export default App;
-

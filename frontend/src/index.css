@@ -2,6 +2,20 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ─── CSS Custom Properties ──────────────────────── */
+:root {
+  --color-bg-primary: #05080d;
+  --color-bg-secondary: #06080b;
+  --color-bg-card: #0a0c10;
+  --color-accent: #3b82f6;
+  --color-accent-cyan: #22d3ee;
+  --color-accent-purple: #a855f7;
+  --color-scrollbar-thumb: #1f2937;
+  --color-scrollbar-thumb-hover: #374151;
+  --color-loader-stroke: #22d3ee;
+  --color-loader-stroke-bg: rgba(34, 211, 238, 0.2);
+}
+
 @layer base {
   body {
     @apply selection:bg-blue-500/30 selection:text-white;
@@ -13,40 +27,96 @@
     background: radial-gradient(at 0% 0%, rgba(59, 130, 246, 0.15) 0px, transparent 50%),
                 radial-gradient(at 100% 0%, rgba(168, 85, 247, 0.15) 0px, transparent 50%),
                 radial-gradient(at 50% 50%, rgba(5, 8, 13, 1) 0px, transparent 100%);
-    background-color: #05080d;
+    background-color: var(--color-bg-primary);
   }
 
   .glass-card {
     @apply bg-slate-900/40 backdrop-blur-md border border-slate-700/50 hover:border-blue-500/30 transition-all duration-300;
   }
 
+  /* Enhanced glow card — gradient border + soft shadow */
+  .glow-card {
+    @apply relative bg-slate-900/40 backdrop-blur-md border border-slate-700/40 rounded-3xl transition-all duration-500;
+    box-shadow: 0 0 0 0 transparent;
+  }
+  .glow-card::before {
+    content: '';
+    position: absolute;
+    inset: -1px;
+    border-radius: inherit;
+    padding: 1px;
+    background: linear-gradient(135deg, rgba(59, 130, 246, 0.08), rgba(168, 85, 247, 0.08), rgba(34, 211, 238, 0.08));
+    -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+    -webkit-mask-composite: xor;
+    mask-composite: exclude;
+    pointer-events: none;
+    transition: opacity 0.5s ease;
+    opacity: 0.4;
+  }
+  .glow-card:hover {
+    box-shadow: 0 0 24px rgba(59, 130, 246, 0.08), 0 0 48px rgba(168, 85, 247, 0.05);
+    border-color: rgba(59, 130, 246, 0.25);
+  }
+  .glow-card:hover::before {
+    opacity: 1;
+  }
+
   .text-gradient {
     @apply bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-indigo-400 to-purple-400;
   }
-
 
   .nav-blur {
     @apply bg-[#05080d]/80 backdrop-blur-lg border-b border-slate-800/50;
   }
 }
 
+/* ─── Scrollbar ──────────────────────────────────── */
 .custom-scrollbar::-webkit-scrollbar {
   width: 6px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-track {
   background: transparent;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #1f2937;
+  background: var(--color-scrollbar-thumb);
   border-radius: 10px;
 }
-
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #374151;
+  background: var(--color-scrollbar-thumb-hover);
 }
 
+/* ─── Typography ─────────────────────────────────── */
 .heading-font {
   font-family: 'Syne', sans-serif;
+}
+
+/* ─── Animations ─────────────────────────────────── */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes softPulseGlow {
+  0%, 100% { box-shadow: 0 0 16px rgba(59, 130, 246, 0.1); }
+  50% { box-shadow: 0 0 28px rgba(59, 130, 246, 0.2); }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.animate-glow-pulse {
+  animation: softPulseGlow 3s ease-in-out infinite;
+}
+
+/* Stagger support: set --stagger on child index */
+.stagger-child {
+  animation: fadeInUp 0.5s ease-out both;
+  animation-delay: calc(var(--stagger, 0) * 100ms);
 }

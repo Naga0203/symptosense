@@ -4,17 +4,20 @@ import {
   Mail, 
   MapPin, 
   Calendar, 
-  Droplet, 
   Activity, 
   Shield, 
   Camera,
   Heart,
   Save,
-  Loader2
+  Loader2,
+  ImagePlus,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { authService } from '../services/api';
+import { DEFAULT_AVATARS } from '../constants';
+import { logger } from '../utils/logger';
 import Loader from '../components/common/Loader';
+import AvatarPicker from '../components/common/AvatarPicker';
 
 interface UserProfile {
   fullName: string;
@@ -44,7 +47,7 @@ export default function Profile() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [isAvatarPickerOpen, setIsAvatarPickerOpen] = useState(false);
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -53,8 +56,9 @@ export default function Profile() {
         if (response.data.profile) {
           setProfile(response.data.profile);
         }
+        logger.info('Profile fetched successfully', null, 'Profile');
       } catch (err) {
-        console.error('Failed to fetch profile', err);
+        logger.error('Failed to fetch profile', err, 'Profile');
       } finally {
         setLoading(false);
       }
@@ -68,34 +72,25 @@ export default function Profile() {
       try {
         await authService.updateProfile(profile);
         setIsEditing(false);
+        window.dispatchEvent(new Event('profileUpdated'));
+        logger.info('Profile updated successfully', null, 'Profile');
       } catch (err) {
-        console.error('Failed to update profile', err);
+        logger.error('Failed to update profile', err, 'Profile');
       } finally {
         setSaving(false);
       }
     } else {
       setIsEditing(true);
+      logger.action('Profile edit mode entered');
     }
   };
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setProfile({ ...profile, profilePic: reader.result as string });
-      };
-      reader.readAsDataURL(file);
-    }
+  const handleAvatarSelect = (avatarUrl: string) => {
+    setProfile({ ...profile, profilePic: avatarUrl });
+    logger.action('Avatar changed via picker', { source: 'AvatarPicker' });
   };
 
-  const avatars = {
-    male: "https://api.dicebear.com/7.x/avataaars/svg?seed=Felix",
-    female: "https://api.dicebear.com/7.x/avataaars/svg?seed=Anya",
-    other: "https://api.dicebear.com/7.x/avataaars/svg?seed=Shadow"
-  };
-
-  const currentAvatar = profile.profilePic || avatars[profile.gender];
+  const currentAvatar = profile.profilePic || DEFAULT_AVATARS[profile.gender] || DEFAULT_AVATARS.other;
 
   if (loading) return <div className="h-[60vh] flex flex-col items-center justify-center gap-6"><Loader /><p className="text-gray-500 font-medium animate-pulse">Syncing Health Passport...</p></div>;
 
@@ -125,16 +120,40 @@ export default function Profile() {
             <div className="absolute top-0 left-0 w-full h-32 bg-gradient-to-br from-blue-600/10 to-indigo-600/10" />
             <div className="relative pt-6">
               <div className="relative inline-block">
-                <div className="w-44 h-44 rounded-[48px] border-4 border-gray-900 overflow-hidden shadow-2xl relative rotate-3 group-hover:rotate-0 transition-transform duration-500">
+                <motion.div
+                  whileHover={{ scale: 1.03 }}
+                  className="w-44 h-44 rounded-[48px] border-4 border-gray-900 overflow-hidden shadow-2xl relative rotate-3 group-hover:rotate-0 transition-transform duration-500"
+                >
                   <img src={currentAvatar} alt="Profile" className="w-full h-full object-cover" />
                   {isEditing && (
-                    <div onClick={() => fileInputRef.current?.click()} className="absolute inset-0 bg-black/60 flex items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"><Camera className="w-10 h-10 text-white" /></div>
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      onClick={() => setIsAvatarPickerOpen(true)}
+                      className="absolute inset-0 bg-black/60 flex flex-col items-center justify-center cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity gap-2"
+                    >
+                      <Camera className="w-8 h-8 text-white" />
+                      <span className="text-[10px] text-white font-bold uppercase tracking-widest">Change Avatar</span>
+                    </motion.div>
                   )}
-                </div>
-                <input type="file" ref={fileInputRef} className="hidden" accept="image/*" onChange={handleImageUpload} />
+                </motion.div>
                 <div className="absolute -bottom-2 -right-2 p-3 bg-blue-600 rounded-2xl border-4 border-gray-900 text-white shadow-xl"><Shield className="w-5 h-5" /></div>
               </div>
-              <div className="mt-8 space-y-2">
+
+              {/* Avatar picker trigger (always visible in edit mode) */}
+              {isEditing && (
+                <motion.button
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  onClick={() => setIsAvatarPickerOpen(true)}
+                  className="mt-4 inline-flex items-center gap-2 px-4 py-2 bg-blue-500/10 border border-blue-500/20 rounded-xl text-blue-400 text-xs font-bold uppercase tracking-wider hover:bg-blue-500/20 transition-all"
+                >
+                  <ImagePlus className="w-3.5 h-3.5" />
+                  Choose Avatar
+                </motion.button>
+              )}
+
+              <div className="mt-6 space-y-2">
                 <h2 className="text-3xl font-black text-white heading-font italic tracking-tight">{profile.fullName || 'Anonymous User'}</h2>
                 <div className="flex items-center justify-center gap-2">
                     <span className="px-3 py-1 bg-blue-500/10 rounded-full text-[10px] font-black uppercase text-blue-400 tracking-widest">Medical ID: #{Math.random().toString(36).substr(2, 6).toUpperCase()}</span>
@@ -190,6 +209,14 @@ export default function Profile() {
           </div>
         </div>
       </div>
+
+      {/* Avatar Picker Modal */}
+      <AvatarPicker
+        isOpen={isAvatarPickerOpen}
+        onClose={() => setIsAvatarPickerOpen(false)}
+        onSelect={handleAvatarSelect}
+        currentAvatar={currentAvatar}
+      />
     </div>
   );
 }

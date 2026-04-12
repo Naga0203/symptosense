@@ -1,4 +1,6 @@
 import React, { useState, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { 
   FileText, 
   Stethoscope, 
@@ -12,9 +14,17 @@ import {
   Pill,
   Apple,
   Activity,
-  ShieldAlert
+  ShieldAlert,
+  Info,
+  Plus,
+  Sparkles
 } from 'lucide-react';
 import { assessmentService } from '../services/api';
+import SymptomInput from '../components/common/SymptomInput';
+import {
+  PREDICTION_DISCLAIMER,
+  AGENT_RENDER_SKIP_KEYS,
+} from '../constants';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -64,7 +74,7 @@ const renderAgentData = (data: any): React.ReactNode => {
     return (
       <div className="space-y-4">
         {Object.entries(data).map(([key, value]) => {
-          if (['agent_name', 'model_used', 'medical_disclaimer', 'disease'].includes(key)) return null;
+          if (AGENT_RENDER_SKIP_KEYS.includes(key as any)) return null;
           return (
             <div key={key} className="space-y-1">
               <span className="text-xs font-semibold uppercase tracking-wider text-gray-500 block mb-1">
@@ -83,10 +93,12 @@ const renderAgentData = (data: any): React.ReactNode => {
 };
 
 export default function NewAssessment() {
+  const navigate = useNavigate();
   const [mode, setMode] = useState<AssessmentMode>('report');
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [symptoms, setSymptoms] = useState('');
+  const [additionalNotes, setAdditionalNotes] = useState('');
   const [reportSymptoms, setReportSymptoms] = useState('');
   const [result, setResult] = useState<DiagnosisResult | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -117,7 +129,8 @@ export default function NewAssessment() {
   };
 
   const handleDiagnose = async () => {
-    const combinedSymptoms = [symptoms, reportSymptoms].filter(Boolean).join(', ');
+    const parts = [symptoms, additionalNotes, reportSymptoms].filter(Boolean);
+    const combinedSymptoms = parts.join(', ');
     if (!combinedSymptoms.trim()) {
       setError('Please provide symptoms or upload a report.');
       return;
@@ -134,6 +147,11 @@ export default function NewAssessment() {
       setIsUploading(false);
     }
   };
+
+  // Parse symptom chips for the explanation panel
+  const inputSymptomsList = symptoms
+    ? symptoms.split(',').map(s => s.trim()).filter(Boolean)
+    : [];
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-20">
@@ -221,16 +239,27 @@ export default function NewAssessment() {
               </div>
             )}
 
+            {/* Symptom Autocomplete Input */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h3 className="text-lg font-bold text-white">Describe Your Symptoms</h3>
+                <h3 className="text-lg font-bold text-white">Select Your Symptoms</h3>
                 <button className="text-cyan-400 p-2 rounded-full bg-cyan-400/10 hover:bg-cyan-400/20 transition-all"><Mic className="w-5 h-5" /></button>
               </div>
-              <textarea 
+              <SymptomInput
                 value={symptoms}
-                onChange={(e) => setSymptoms(e.target.value)}
-                placeholder="Describe your symptoms here (e.g., persistent headache, fatigue for 3 days...)"
-                className="w-full bg-black/40 border border-gray-800 rounded-3xl p-6 min-h-[160px] text-white focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all outline-none resize-none"
+                onChange={setSymptoms}
+                placeholder="Search and add symptoms (e.g., headache, fever, fatigue...)"
+              />
+            </div>
+
+            {/* Additional notes */}
+            <div className="space-y-3">
+              <h3 className="text-sm font-semibold text-gray-400 uppercase tracking-wider">Additional Notes (Optional)</h3>
+              <textarea 
+                value={additionalNotes}
+                onChange={(e) => setAdditionalNotes(e.target.value)}
+                placeholder="Any extra context — duration, severity, when symptoms started..."
+                className="w-full bg-black/40 border border-gray-800 rounded-2xl p-5 min-h-[100px] text-white text-sm focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 transition-all outline-none resize-none placeholder:text-gray-600"
               />
             </div>
 
@@ -243,7 +272,7 @@ export default function NewAssessment() {
 
             <button 
               onClick={handleDiagnose}
-              disabled={isUploading || (!symptoms.trim() && !reportSymptoms)}
+              disabled={isUploading || (!symptoms.trim() && !additionalNotes.trim() && !reportSymptoms)}
               className="w-full h-16 bg-cyan-500 hover:bg-cyan-400 disabled:bg-gray-800 disabled:text-gray-600 text-[#06080b] font-bold rounded-2xl flex items-center justify-center gap-2 transition-all group"
             >
               {isUploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <>Analyze Condition <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>}
@@ -253,7 +282,11 @@ export default function NewAssessment() {
       ) : (
         <div className="space-y-8 animate-in zoom-in-95 duration-500">
           {/* Header Summary Card */}
-          <div className="bg-gradient-to-br from-gray-900 to-black border border-cyan-500/30 rounded-[32px] p-8">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="bg-gradient-to-br from-gray-900 to-black border border-cyan-500/30 rounded-[32px] p-8"
+          >
             <div className="flex flex-col md:flex-row items-center gap-8 justify-between">
               <div className="flex flex-col items-center md:items-start text-center md:text-left space-y-4">
                 <div className="p-4 bg-cyan-500/20 rounded-full w-fit">
@@ -276,20 +309,92 @@ export default function NewAssessment() {
                 <p className="text-gray-400 text-sm">Confidence Match</p>
               </div>
             </div>
-          </div>
+          </motion.div>
 
-          {/* Global Disclaimer */}
-          <div className="p-6 bg-red-500/10 border border-red-500/20 rounded-3xl text-red-500 text-sm flex gap-4">
-            <ShieldAlert className="w-6 h-6 flex-shrink-0" />
-            <p className="leading-relaxed font-medium">
-              {result.analysis.global_medical_disclaimer}
-            </p>
-          </div>
+          {/* ─── SPLIT LAYOUT: Disclaimer (left) + Explanation (right) ─── */}
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+          >
+            {/* Left — Disclaimer */}
+            <div className="glow-card p-7 rounded-[28px] border-l-4 border-l-amber-500/60 flex gap-4 items-start">
+              <div className="p-3 bg-amber-500/15 rounded-xl flex-shrink-0 mt-0.5">
+                <Info className="w-6 h-6 text-amber-400" />
+              </div>
+              <div className="space-y-3">
+                <h3 className="text-sm font-bold text-amber-400 uppercase tracking-wider">Medical Disclaimer</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  {PREDICTION_DISCLAIMER}
+                </p>
+                <p className="text-gray-500 text-xs leading-relaxed">
+                  {result.analysis.global_medical_disclaimer}
+                </p>
+              </div>
+            </div>
+
+            {/* Right — Why this was predicted */}
+            <div className="glow-card p-7 rounded-[28px] flex gap-4 items-start">
+              <div className="p-3 bg-cyan-500/15 rounded-xl flex-shrink-0 mt-0.5">
+                <Sparkles className="w-6 h-6 text-cyan-400" />
+              </div>
+              <div className="space-y-4 flex-1">
+                <h3 className="text-sm font-bold text-cyan-400 uppercase tracking-wider">Why This Was Predicted</h3>
+                <div className="space-y-3">
+                  <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <Activity className="w-3.5 h-3.5" />
+                    <span>Confidence: <strong className="text-white">{(result.confidence * 100).toFixed(1)}%</strong></span>
+                  </div>
+                  {inputSymptomsList.length > 0 && (
+                    <div className="space-y-2">
+                      <p className="text-xs text-gray-500 font-semibold uppercase tracking-wider">Key Symptoms Influencing Prediction</p>
+                      <div className="flex flex-wrap gap-2">
+                        {inputSymptomsList.map((s, i) => (
+                          <span
+                            key={i}
+                            className="px-3 py-1.5 bg-cyan-500/10 border border-cyan-500/25 text-cyan-300 rounded-lg text-xs font-medium"
+                          >
+                            {s}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                  <p className="text-gray-500 text-xs leading-relaxed">
+                    The neural network analyzed the symptom pattern above against its training data of medical conditions.
+                    The confidence score reflects pattern match strength — not diagnostic certainty.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+
+          {/* Explore Treatment Options Button */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.25 }}
+          >
+            <button
+              onClick={() => navigate(`/${encodeURIComponent(result.prediction)}/treatment-exploration`)}
+              className="w-full h-16 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-[1.015] active:scale-[0.99] group"
+            >
+              <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
+              Explore Treatment Options
+              <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+            </button>
+          </motion.div>
 
           {/* Analysis Grid */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.35 }}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-6"
+          >
              {/* 1. Clinical Insights */}
-             <div className="bg-gray-900/40 border border-gray-800 rounded-[32px] p-8 space-y-6 flex flex-col">
+             <div className="glow-card bg-gray-900/40 rounded-[32px] p-8 space-y-6 flex flex-col">
                 <div className="flex items-center gap-3">
                   <Activity className="w-6 h-6 text-cyan-400" />
                   <h3 className="text-xl font-bold text-white uppercase tracking-tight">Clinical Insights</h3>
@@ -303,7 +408,7 @@ export default function NewAssessment() {
              </div>
 
              {/* 2. Professional Guidelines */}
-             <div className="bg-gray-900/40 border border-gray-800 rounded-[32px] p-8 space-y-6 flex flex-col">
+             <div className="glow-card bg-gray-900/40 rounded-[32px] p-8 space-y-6 flex flex-col">
                 <div className="flex items-center gap-3">
                   <FileText className="w-6 h-6 text-emerald-400" />
                   <h3 className="text-xl font-bold text-white uppercase tracking-tight">Professional Guidelines</h3>
@@ -317,7 +422,7 @@ export default function NewAssessment() {
              </div>
 
              {/* 3. Treatment Exploration */}
-             <div className="bg-gray-900/40 border border-gray-800 rounded-[32px] p-8 space-y-6 flex flex-col">
+             <div className="glow-card bg-gray-900/40 rounded-[32px] p-8 space-y-6 flex flex-col">
                 <div className="flex items-center gap-3">
                   <Pill className="w-6 h-6 text-purple-400" />
                   <h3 className="text-xl font-bold text-white uppercase tracking-tight">Treatment Exploration</h3>
@@ -331,7 +436,7 @@ export default function NewAssessment() {
              </div>
 
              {/* 4. Lifestyle & Nutrition */}
-             <div className="bg-gray-900/40 border border-gray-800 rounded-[32px] p-8 space-y-6 flex flex-col">
+             <div className="glow-card bg-gray-900/40 rounded-[32px] p-8 space-y-6 flex flex-col">
                 <div className="flex items-center gap-3">
                   <Apple className="w-6 h-6 text-orange-400" />
                   <h3 className="text-xl font-bold text-white uppercase tracking-tight">Lifestyle & Nutrition</h3>
@@ -343,7 +448,7 @@ export default function NewAssessment() {
                   <p className="text-[10px] text-gray-500 uppercase tracking-widest">{result.analysis.agents.lifestyle_and_diet.agent_name} | {result.analysis.agents.lifestyle_and_diet.model_used}</p>
                 </div>
              </div>
-          </div>
+          </motion.div>
 
           <button 
             onClick={() => setResult(null)}

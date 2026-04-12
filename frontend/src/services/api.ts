@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getSessionUserId } from '../utils/session';
+import { logger } from '../utils/logger';
 
 const API_BASE_URL = '/api';
 
@@ -9,6 +10,37 @@ const api = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+// ─── Request interceptor — log outgoing calls ────────
+api.interceptors.request.use(
+  (config) => {
+    const method = (config.method || 'GET').toUpperCase();
+    const url = `${config.baseURL || ''}${config.url || ''}`;
+    logger.api(method, url);
+    return config;
+  },
+  (error) => {
+    logger.error('Request setup failed', error, 'API');
+    return Promise.reject(error);
+  }
+);
+
+// ─── Response interceptor — log results & errors ─────
+api.interceptors.response.use(
+  (response) => {
+    const method = (response.config.method || 'GET').toUpperCase();
+    const url = `${response.config.baseURL || ''}${response.config.url || ''}`;
+    logger.api(method, url, response.status);
+    return response;
+  },
+  (error) => {
+    const status = error.response?.status;
+    const method = (error.config?.method || 'GET').toUpperCase();
+    const url = `${error.config?.baseURL || ''}${error.config?.url || ''}`;
+    logger.api(method, url, status, { message: error.message });
+    return Promise.reject(error);
+  }
+);
 
 export const authService = {
   getProfile: () => api.get('/auth/profile/', { params: { user_id: getSessionUserId() } }),
@@ -30,14 +62,6 @@ export const assessmentService = {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
 };
-
-api.interceptors.response.use(
-  (response) => response,
-  (error) => {
-    console.error('API Error:', error);
-    return Promise.reject(error);
-  }
-);
 
 export const healthCheck = () => api.get('/health/');
 
