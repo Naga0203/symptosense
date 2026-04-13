@@ -29,6 +29,49 @@ SymptoSense is a premium medical AI platform designed to bridge the gap between 
 - **AI Models**: OpenRouter SDK (Gemma 4 series)
 - **ML/OCR**: Custom Neural Network & document processing pipeline
 
+## 🚀 Quick Start
+
+### 1. Clone & Setup
+```bash
+git clone https://github.com/Naga0203/symptosense.git
+cd symptosense
+```
+
+### 2. Backend Setup
+```bash
+cd backend
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
+pip install -r requirements.txt
+cp .env.example .env
+# Update .env with your OpenRouter and Firebase credentials
+python manage.py migrate
+python manage.py runserver
+```
+
+### 3. Frontend Setup
+```bash
+cd frontend
+npm install
+cp .env.example .env
+# Update .env with your Firebase and API configuration
+npm run dev
+```
+
+## ⚙️ Detailed Configuration
+
+### Prerequisites
+- **Python 3.10+**
+- **Node.js 18+**
+- **Firebase Project**: Required for Authentication and Firestore.
+- **OpenRouter API Key**: Required for AI Agent reasoning.
+
+### Environment Variables
+Both frontend and backend require `.env` files. See `.env.example` in respective directories for required keys.
+- `OPENROUTER_API_KEY`: Found in OpenRouter dashboard.
+- `FIREBASE_CREDENTIALS`: Path to your service account JSON.
+- `VITE_FIREBASE_CONFIG`: Standard Firebase web config for the frontend.
+
 ## 📦 Project Structure
 
 ```bash

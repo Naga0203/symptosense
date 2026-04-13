@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { getSessionUserId } from '../utils/session';
 import { logger } from '../utils/logger';
+import { auth } from './firebase';
 
 const API_BASE_URL = '/api';
 
@@ -11,9 +12,16 @@ const api = axios.create({
   },
 });
 
-// ─── Request interceptor — log outgoing calls ────────
+// ─── Request interceptor — log outgoing calls & add auth token ───
 api.interceptors.request.use(
-  (config) => {
+  async (config) => {
+    // Inject Firebase ID Token if user is logged in
+    const user = auth.currentUser;
+    if (user) {
+      const token = await user.getIdToken();
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+
     const method = (config.method || 'GET').toUpperCase();
     const url = `${config.baseURL || ''}${config.url || ''}`;
     logger.api(method, url);

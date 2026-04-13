@@ -1,33 +1,13 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import Sidebar from './Sidebar';
-import { motion, AnimatePresence } from 'framer-motion';
-import { Menu, X, ChevronLeft, ChevronRight, User } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Menu, ChevronLeft, ChevronRight, User } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { authService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
-  const [profile, setProfile] = useState<any>(null);
-
-  const fetchProfile = async () => {
-    try {
-      const res = await authService.getProfile();
-      setProfile(res.data.profile);
-    } catch (err) {
-      console.error('Layout failed to fetch profile', err);
-    }
-  };
-
-  useEffect(() => {
-    fetchProfile();
-
-    const handleProfileUpdate = () => {
-      fetchProfile();
-    };
-
-    window.addEventListener('profileUpdated', handleProfileUpdate);
-    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
-  }, []);
+  const { profile } = useAuth();
 
   return (
     <div className="flex min-h-screen bg-[#06080b] font-['Inter']">

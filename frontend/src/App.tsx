@@ -10,24 +10,30 @@ import TreatmentExploration from './pages/TreatmentExploration';
 import Layout from './components/Layout';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import { AuthProvider } from './contexts/AuthContext';
+import ProtectedRoute from './components/auth/ProtectedRoute';
 
 function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
-        <Route path="/assessment" element={<Layout><NewAssessment /></Layout>} />
-        <Route path="/report-analysis" element={<Layout><ReportAnalysis /></Layout>} />
-        <Route path="/diseases" element={<Layout><Diseases /></Layout>} />
-        <Route path="/history" element={<Layout><History /></Layout>} />
-        <Route path="/profile" element={<Layout><Profile /></Layout>} />
-        <Route path="/:diseaseName/treatment-exploration" element={<Layout><TreatmentExploration /></Layout>} />
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/login" element={<Login />} />
+          <Route path="/register" element={<Register />} />
+          
+          <Route path="/dashboard" element={<ProtectedRoute><Layout><Dashboard /></Layout></ProtectedRoute>} />
+          <Route path="/assessment" element={<ProtectedRoute><Layout><NewAssessment /></Layout></ProtectedRoute>} />
+          <Route path="/report-analysis" element={<ProtectedRoute><Layout><ReportAnalysis /></Layout></ProtectedRoute>} />
+          <Route path="/diseases" element={<ProtectedRoute><Layout><Diseases /></Layout></ProtectedRoute>} />
+          <Route path="/history" element={<ProtectedRoute><Layout><History /></Layout></ProtectedRoute>} />
+          <Route path="/profile" element={<ProtectedRoute><Layout><Profile /></Layout></ProtectedRoute>} />
+          <Route path="/:diseaseName/treatment-exploration" element={<ProtectedRoute><Layout><TreatmentExploration /></Layout></ProtectedRoute>} />
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

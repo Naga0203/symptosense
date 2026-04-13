@@ -1,15 +1,16 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import React from 'react';
+import { NavLink, useLocation, useNavigate } from 'react-router-dom';
 import { 
   LayoutDashboard, 
   FilePlus, 
   History, 
   Stethoscope, 
   UserCircle,
-  Activity
+  Activity,
+  LogOut
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { authService } from '../services/api';
+import { useAuth } from '../contexts/AuthContext';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -18,28 +19,14 @@ function cn(...inputs: ClassValue[]) {
 }
 
 export default function Sidebar({ isOpen }: { isOpen: boolean }) {
-  const [profile, setProfile] = useState<any>(null);
+  const { profile, logout } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const fetchProfile = async () => {
-    try {
-      const res = await authService.getProfile();
-      setProfile(res.data.profile);
-    } catch (err) {
-      console.error('Sidebar failed to fetch profile', err);
-    }
+  const handleLogout = async () => {
+    await logout();
+    navigate('/');
   };
-
-  useEffect(() => {
-    fetchProfile();
-
-    const handleProfileUpdate = () => {
-      fetchProfile();
-    };
-
-    window.addEventListener('profileUpdated', handleProfileUpdate);
-    return () => window.removeEventListener('profileUpdated', handleProfileUpdate);
-  }, []);
 
   const navItems = [
     { icon: LayoutDashboard, label: 'Dashboard', path: '/dashboard' },
@@ -102,6 +89,14 @@ export default function Sidebar({ isOpen }: { isOpen: boolean }) {
             )}
           </NavLink>
         ))}
+
+        <button
+          onClick={handleLogout}
+          className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl transition-all duration-300 text-gray-400 hover:text-red-400 hover:bg-red-400/5 group"
+        >
+          <LogOut className="w-5 h-5 group-hover:scale-110 transition-transform" />
+          <span className="font-medium">Logout</span>
+        </button>
       </nav>
 
       <NavLink 
