@@ -2,7 +2,7 @@ import React from 'react';
 import Navbar from '../components/landing/Navbar';
 import AuthForm from '../components/auth/AuthForm';
 
-export default function Auth() {
+export default function Login() {
   return (
     <div className="min-h-screen mesh-gradient flex flex-col relative overflow-hidden">
       <Navbar />
@@ -12,7 +12,7 @@ export default function Auth() {
       <div className="absolute bottom-1/4 -right-20 w-80 h-80 bg-purple-600/10 rounded-full blur-[120px] pointer-events-none" />
 
       <main className="flex-1 flex items-center justify-center p-6 pt-24">
-        <AuthForm />
+        <AuthForm initialMode="login" />
       </main>
 
       <footer className="py-8 text-center text-slate-600 text-[10px] tracking-widest uppercase">

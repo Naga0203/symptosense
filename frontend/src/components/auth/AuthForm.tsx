@@ -54,8 +54,12 @@ const registerSchema = z.object({
 type LoginFormValues = z.infer<typeof loginSchema>;
 type RegisterFormValues = z.infer<typeof registerSchema>;
 
-export default function AuthForm() {
-  const [isLogin, setIsLogin] = useState(true);
+interface AuthFormProps {
+  initialMode?: 'login' | 'register';
+}
+
+export default function AuthForm({ initialMode = 'login' }: AuthFormProps) {
+  const [isLogin, setIsLogin] = useState(initialMode === 'login');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -238,8 +242,7 @@ export default function AuthForm() {
               </div>
 
               <div className="space-y-1.5">
-                <p className="text-3xl font-extrabold text-white heading-font text-center">Login</p>
-                <p className="text-gray-400 text-sm text-center">Sign in to your health dashboard</p>
+
                 <div className="flex justify-between items-center px-1">
                   <label className="text-xs font-medium text-slate-500">Password</label>
                   <a href="#" className="text-[10px] text-blue-400 hover:underline">Forgot?</a>

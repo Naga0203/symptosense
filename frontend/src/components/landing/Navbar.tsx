@@ -26,7 +26,7 @@ export default function Navbar() {
             Sign In
           </Link>
           <Link
-            to="/dashboard"
+            to="/register"
             className="px-6 py-2.5 text-sm font-semibold text-white bg-gradient-to-r from-blue-600 to-indigo-600 rounded-full hover:shadow-[0_0_20px_rgba(37,99,235,0.4)] transition-all duration-300"
           >
             Get Started

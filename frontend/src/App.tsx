@@ -8,14 +8,16 @@ import Profile from './pages/Profile';
 import Diseases from './pages/Diseases';
 import TreatmentExploration from './pages/TreatmentExploration';
 import Layout from './components/Layout';
-import Auth from './pages/Auth';
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Home />} />
-        {/* Auth routes disabled for testing */}
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} />
         <Route path="/dashboard" element={<Layout><Dashboard /></Layout>} />
         <Route path="/assessment" element={<Layout><NewAssessment /></Layout>} />
         <Route path="/report-analysis" element={<Layout><ReportAnalysis /></Layout>} />
