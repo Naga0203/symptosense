@@ -1,4 +1,4 @@
-# SymptoSense 🩺
+  # SymptoSense 🩺
 **AI-Powered Healthcare Analysis & Personalized Medical Recommendations**
 
 SymptoSense is a premium medical AI platform designed to bridge the gap between initial symptoms and professional medical guidance. It leverages a custom Neural Network for primary disease prediction and orchestrates a team of specialized AI agents to provide deep, actionable health insights.
