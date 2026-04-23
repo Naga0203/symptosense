@@ -10,7 +10,7 @@ import torch.nn.functional as F
 
 # Ensure NLTK data is downloaded for preprocessing
 nltk.download('punkt', quiet=True)
-nltk.download('punkt_tab', quiet=True)
+nltk.download('punkt_tab', quiet=True) # Ensure compatibility with newer NLTK
 nltk.download('stopwords', quiet=True)
 
 class SymptomClassifier(nn.Module):
@@ -35,7 +35,7 @@ class SymptomClassifier(nn.Module):
 
 def preprocess_text(text):
     text = text.lower()
-    text = re.sub(r'[^a-zA-Z ]', '', text) # Modified: Remove punctuation and underscores, keeping only letters and spaces
+    text = re.sub(r'[^A-z ]', '', text) # Matches training: Keeps letters, spaces, and underscores (_)
     text = re.sub(r'\d+', '', text)    # Remove numbers
     tokens = word_tokenize(text)
     stop_words = set(stopwords.words('english'))

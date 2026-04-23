@@ -13,11 +13,10 @@ from .base_agent import BaseMedicalAgent
 
 
 class RecommendationAgent(BaseMedicalAgent):
-
     AGENT_NAME = "Recommendation Agent"
     ENV_API_KEY = "RECOMMENDATION_AGENT_API_KEY"
     ENV_MODEL = "RECOMMENDATION_AGENT_MODEL"
-    DEFAULT_MODEL = "google/gemma-4-31b-it:free"
+    DEFAULT_MODEL = "minimax/minimax-m2.5:free"
 
     DISCLAIMER = (
         "⚠️ RECOMMENDATION DISCLAIMER: These recommendations are AI-generated "
@@ -29,47 +28,44 @@ class RecommendationAgent(BaseMedicalAgent):
 
     def _build_system_prompt(self) -> str:
         return (
-            "You are a senior medical recommendation specialist with expertise in "
-            "evidence-based medicine. Your role is to provide actionable, prioritized "
-            "recommendations when a disease is identified. You must be thorough yet "
-            "concise, and always emphasize the importance of professional consultation.\n\n"
-            "IMPORTANT: Respond ONLY with valid JSON. No markdown, no code fences, no extra text."
+            "You are a senior medical recommendation specialist. Your role is to provide "
+            "actionable, prioritized recommendations when a disease is identified. "
+            "Be thorough yet concise, and always emphasize professional consultation.\n\n"
+            "IMPORTANT: Respond ONLY with valid JSON. No markdown, no code fences."
         )
 
     def _build_user_prompt(self, disease: str, symptoms: str) -> str:
         return """
-A neural network model has predicted the following disease:
+Provide medical recommendations for the following:
+Predicted Disease: {disease}
+Patient Symptoms: {symptoms}
 
-**Predicted Disease:** {disease}
-**Patient Symptoms:** {symptoms}
-
-Based on this prediction, provide structured medical recommendations in the following JSON format:
-
+Return a structured JSON response:
 {{
     "disease": "{disease}",
-    "priority_level": "HIGH / MEDIUM / LOW — based on disease severity",
+    "priority_level": "HIGH / MEDIUM / LOW based on severity",
     "immediate_actions": [
-        "Action 1 the patient should take right now",
-        "Action 2 the patient should take right now"
+        "Immediate action item 1",
+        "Immediate action item 2"
     ],
     "recommended_specialists": [
         {{
-            "specialist": "Type of doctor",
-            "reason": "Why this specialist is needed"
+            "specialist": "Specialist type (e.g., Cardiologist)",
+            "reason": "Why this specialist is relevant"
         }}
     ],
     "diagnostic_tests": [
         {{
-            "test_name": "Name of test",
-            "purpose": "Why this test helps confirm or monitor the condition"
+            "test_name": "Test name (e.g., Blood Sugar)",
+            "purpose": "Why this test is needed"
         }}
     ],
-    "monitoring_plan": "How the patient should monitor their condition going forward",
-    "when_to_seek_emergency": "Red flag symptoms that require immediate emergency care",
-    "follow_up_timeline": "Recommended timeline for follow-up appointments"
+    "monitoring_plan": "Specific metrics or symptoms the patient should track",
+    "when_to_seek_emergency": "Specific red-flag symptoms for {disease}",
+    "follow_up_timeline": "Recommended timeframe for professional follow-up"
 }}
 
-Provide thorough, evidence-based recommendations. Be empathetic and professional.
+Ensure all recommendations are specific to {disease}. Avoid generic advice.
 """
 
     def _get_output_schema_description(self) -> str:

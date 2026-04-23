@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence, LayoutGroup } from 'framer-motion';
 import {
   Leaf,
@@ -40,17 +40,78 @@ const GRADIENT_MAP: Record<string, { primary: string; secondary: string; glow?: 
 
 export default function TreatmentExploration() {
   const { diseaseName } = useParams<{ diseaseName: string }>();
+  const location = useLocation();
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const decodedDisease = decodeURIComponent(diseaseName || 'Unknown');
+  const aiAnalysis = location.state?.analysis;
+
+  // Map AI data to categories if available
+  const dynamicCategories = useMemo(() => {
+    if (!aiAnalysis) return TREATMENT_CATEGORIES;
+
+    const treatment = aiAnalysis.treatment_exploration;
+    const lifestyle = aiAnalysis.lifestyle_and_diet;
+
+    return TREATMENT_CATEGORIES.map(category => {
+      let detail = { ...category.detail };
+      let description = category.description;
+
+      if (category.id === 'allopathy' && treatment?.allopathy) {
+        detail = {
+          treatments: treatment.allopathy.map((t: any) => t.treatment_name),
+          medicines: treatment.allopathy.filter((t: any) => t.type?.toLowerCase().includes('medication')).map((t: any) => t.treatment_name),
+          benefits: treatment.allopathy.map((t: any) => t.description),
+          risks: treatment.allopathy.flatMap((t: any) => t.common_side_effects || []),
+          whenToPrefer: ["Standard evidence-based care", "Acute symptoms"]
+        };
+        description = treatment.treatment_overview || description;
+      } else if (category.id === 'ayurvedic' && treatment?.ayurvedic_treatments) {
+        detail = {
+          treatments: treatment.ayurvedic_treatments.map((t: any) => t.treatment_type),
+          medicines: treatment.ayurvedic_treatments.map((t: any) => t.formulation_name),
+          benefits: treatment.ayurvedic_treatments.map((t: any) => t.description),
+          risks: ["Consult Ayurvedic practitioner", "Check for herb-drug interactions"],
+          whenToPrefer: ["Long-term wellness", "Holistic balance"]
+        };
+      } else if (category.id === 'homeopathy' && treatment?.homeopathy) {
+        detail = {
+          treatments: treatment.homeopathy.map((t: any) => t.indication),
+          medicines: treatment.homeopathy.map((t: any) => t.remedy_name),
+          benefits: treatment.homeopathy.map((t: any) => t.description),
+          risks: ["Limited clinical evidence", "Individual sensitivity"],
+          whenToPrefer: ["Sensitive patients", "Chronic conditions"]
+        };
+      } else if (category.id === 'modern-medicine' && treatment?.emerging_therapies) {
+        detail = {
+          treatments: treatment.emerging_therapies.map((t: any) => t.therapy_name),
+          medicines: treatment.emerging_therapies.map((t: any) => t.research_stage),
+          benefits: treatment.emerging_therapies.map((t: any) => t.description),
+          risks: ["Experimental stage", "High cost"],
+          whenToPrefer: ["Refractory cases", "Clinical trials"]
+        };
+      } else if (category.id === 'lifestyle-diet' && lifestyle) {
+        detail = {
+          treatments: lifestyle.exercise_recommendations?.recommended_activities || [],
+          medicines: lifestyle.supplements?.map((s: any) => s.name) || [],
+          benefits: [lifestyle.mental_health, lifestyle.stress_management?.importance].filter(Boolean),
+          risks: [lifestyle.exercise_recommendations?.activities_to_avoid].filter(Boolean),
+          whenToPrefer: ["Lifestyle optimization", "Supportive care"]
+        };
+      }
+
+      return { ...category, detail, description };
+    });
+  }, [aiAnalysis]);
 
   // Reorder categories: expanded card goes first, rest maintain order
   const orderedCategories = useMemo(() => {
-    if (!expandedId) return TREATMENT_CATEGORIES;
-    const expanded = TREATMENT_CATEGORIES.find((c) => c.id === expandedId);
-    const rest = TREATMENT_CATEGORIES.filter((c) => c.id !== expandedId);
-    return expanded ? [expanded, ...rest] : TREATMENT_CATEGORIES;
-  }, [expandedId]);
+    const source = dynamicCategories;
+    if (!expandedId) return source;
+    const expanded = source.find((c) => c.id === expandedId);
+    const rest = source.filter((c) => c.id !== expandedId);
+    return expanded ? [expanded, ...rest] : source;
+  }, [expandedId, dynamicCategories]);
 
   const toggleExpand = (id: string) => {
     const next = expandedId === id ? null : id;

@@ -44,6 +44,8 @@ interface AgentResponse {
 interface DiagnosisResult {
   prediction: string;
   confidence: number;
+  symptoms_analyzed: string;
+  saved?: boolean;
   analysis: {
     status: string;
     global_medical_disclaimer: string;
@@ -377,7 +379,12 @@ export default function NewAssessment() {
             transition={{ delay: 0.25 }}
           >
             <button
-              onClick={() => navigate(`/${encodeURIComponent(result.prediction)}/treatment-exploration`)}
+              onClick={() => navigate(`/${encodeURIComponent(result.prediction)}/treatment-exploration`, { 
+                state: { 
+                  analysis: result.analysis.agents,
+                  symptoms: result.symptoms_analyzed 
+                } 
+              })}
               className="w-full h-16 bg-gradient-to-r from-blue-600 to-indigo-600 text-white font-bold rounded-2xl flex items-center justify-center gap-3 transition-all duration-300 hover:shadow-[0_0_40px_rgba(59,130,246,0.3)] hover:scale-[1.015] active:scale-[0.99] group"
             >
               <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />

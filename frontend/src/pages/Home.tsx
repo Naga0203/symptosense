@@ -12,6 +12,7 @@ import {
   Plus,
   Activity
 } from 'lucide-react';
+import { useAuth } from '../contexts/AuthContext';
 import Navbar from '../components/landing/Navbar';
 import {
   LANDING_STATS,
@@ -30,6 +31,8 @@ const fadeInUp = {
 };
 
 export default function Home() {
+  const { user } = useAuth();
+
   return (
     <div className="min-h-screen mesh-gradient overflow-x-hidden">
       <Navbar />
@@ -61,19 +64,31 @@ export default function Home() {
             </p>
 
             <div className="flex flex-wrap gap-4">
-              <Link 
-                to="/dashboard" 
-                className="group px-7 py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all flex items-center gap-2"
-              >
-                Analyze Symptoms 
-                <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-              </Link>
-              <a 
-                href="#how-it-works" 
-                className="px-7 py-3.5 glass-card rounded-xl font-bold text-sm text-white hover:bg-slate-800/80"
-              >
-                Explore How It Works
-              </a>
+              {user ? (
+                <Link 
+                  to="/dashboard" 
+                  className="group px-7 py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all flex items-center gap-2"
+                >
+                  Analyze Symptoms 
+                  <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                </Link>
+              ) : (
+                <>
+                  <Link 
+                    to="/register" 
+                    className="group px-7 py-3.5 bg-blue-600 text-white rounded-xl font-bold text-sm hover:bg-blue-700 hover:shadow-[0_0_30px_rgba(37,99,235,0.4)] transition-all flex items-center gap-2"
+                  >
+                    Create Account
+                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                  <Link 
+                    to="/login" 
+                    className="px-7 py-3.5 glass-card rounded-xl font-bold text-sm text-white hover:bg-slate-800/80"
+                  >
+                    Sign In
+                  </Link>
+                </>
+              )}
             </div>
 
             <div className="pt-4 flex flex-wrap gap-8 items-center text-slate-500 text-xs">
@@ -167,9 +182,15 @@ export default function Home() {
                   Use natural language to explain how you're feeling. Our AI understands 
                   context, severity, and duration — no medical jargon required.
                 </p>
-                <a href="/dashboard" className="inline-flex items-center text-blue-400 font-bold text-sm hover:text-blue-300 gap-2">
-                  Start Your Analysis <ChevronRight className="w-4 h-4" />
-                </a>
+                {user ? (
+                  <Link to="/dashboard" className="inline-flex items-center text-blue-400 font-bold text-sm hover:text-blue-300 gap-2">
+                    Start Your Analysis <ChevronRight className="w-4 h-4" />
+                  </Link>
+                ) : (
+                  <Link to="/login" className="inline-flex items-center text-blue-400 font-bold text-sm hover:text-blue-300 gap-2">
+                    Sign In to Start <ChevronRight className="w-4 h-4" />
+                  </Link>
+                )}
               </div>
               <div className="relative glow-card p-2 rounded-3xl group">
                 <img 

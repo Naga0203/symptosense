@@ -24,7 +24,7 @@ import {
   signInWithGoogle, 
   isUsernameAvailable 
 } from '../../services/authService';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 
 // --- Validation Schemas ---
 
@@ -195,25 +195,6 @@ export default function AuthForm({ initialMode = 'login' }: AuthFormProps) {
           </motion.div>
         )}
 
-        {/* Tab Toggle */}
-        <div className="flex bg-slate-800/50 p-1 rounded-xl mb-8">
-          <button
-            onClick={() => setIsLogin(true)}
-            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-              isLogin ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Login
-          </button>
-          <button
-            onClick={() => setIsLogin(false)}
-            className={`flex-1 py-2 text-sm font-semibold rounded-lg transition-all ${
-              !isLogin ? 'bg-blue-600 text-white shadow-lg' : 'text-slate-400 hover:text-white'
-            }`}
-          >
-            Register
-          </button>
-        </div>
 
         <AnimatePresence mode="wait">
           {isLogin ? (
@@ -479,6 +460,20 @@ export default function AuthForm({ initialMode = 'login' }: AuthFormProps) {
           By continuing, you agree to our{' '}
           <a href="#" className="text-blue-400 hover:underline">Terms of Service</a> and{' '}
           <a href="#" className="text-blue-400 hover:underline">Privacy Policy</a>.
+        </p>
+
+        <p className="text-center mt-4 text-sm text-slate-400">
+          {isLogin ? (
+            <>
+              Don't have an account?{' '}
+              <Link to="/register" className="text-blue-400 font-bold hover:underline">Sign up</Link>
+            </>
+          ) : (
+            <>
+              Already have an account?{' '}
+              <Link to="/login" className="text-blue-400 font-bold hover:underline">Log in</Link>
+            </>
+          )}
         </p>
       </motion.div>
       

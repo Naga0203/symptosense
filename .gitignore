@@ -132,5 +132,5 @@ build/
 # Postman collections (optional - remove if you want to track them)
 *.postman.json
 postman_collection.json
-
+screens
 antigravity-skills

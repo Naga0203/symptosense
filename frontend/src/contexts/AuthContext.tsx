@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { 
   onAuthStateChanged, 
-  User,
+  type User,
   signOut
 } from 'firebase/auth';
 import { 
@@ -47,7 +47,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           if (docSnap.exists()) {
             setProfile(docSnap.data() as UserProfile);
           } else {
-            console.warn('User profile does not exist in Firestore');
             setProfile(null);
           }
           setLoading(false);

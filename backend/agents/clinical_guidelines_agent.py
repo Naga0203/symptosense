@@ -12,66 +12,61 @@ from .base_agent import BaseMedicalAgent
 
 
 class ClinicalGuidelinesAgent(BaseMedicalAgent):
-
     AGENT_NAME = "Clinical Guidelines Agent"
     ENV_API_KEY = "CLINICAL_GUIDELINES_AGENT_API_KEY"
     ENV_MODEL = "CLINICAL_GUIDELINES_AGENT_MODEL"
-    DEFAULT_MODEL = "google/gemma-4-31b-it:free"
+    DEFAULT_MODEL = "minimax/minimax-m2.5:free"
 
     DISCLAIMER = (
         "⚠️ CLINICAL GUIDELINES DISCLAIMER: The guidelines presented are AI-synthesized "
         "from general medical literature and may not reflect the most current updates. "
-        "Clinical guidelines change frequently — always verify with official sources such as "
-        "WHO, CDC, NICE, or your country's national health authority. Your physician should "
-        "interpret guidelines in the context of YOUR specific clinical situation."
+        "Always verify with official sources such as WHO, CDC, NICE, or your country's national "
+        "health authority. Your physician should interpret guidelines in the context of YOUR "
+        "specific clinical situation."
     )
 
     def _build_system_prompt(self) -> str:
         return (
-            "You are a clinical guidelines expert with deep knowledge of international "
-            "medical standards from organizations like WHO, NICE, AHA, NCCN, and IDSA. "
-            "Your role is to summarize the standard-of-care guidelines, staging criteria, "
-            "and key clinical protocols for diagnosed conditions. You cite guideline bodies "
-            "where appropriate.\n\n"
-            "IMPORTANT: Respond ONLY with valid JSON. No markdown, no code fences, no extra text."
+            "You are a clinical guidelines expert. Your role is to summarize the "
+            "standard-of-care guidelines, staging criteria, and key clinical protocols "
+            "for diagnosed conditions. Cite guideline bodies like WHO, NICE, or AHA.\n\n"
+            "IMPORTANT: Respond ONLY with valid JSON. No markdown, no code fences."
         )
 
     def _build_user_prompt(self, disease: str, symptoms: str) -> str:
         return """
-A neural network model has predicted the following disease:
+Provide clinical guidelines and standard-of-care for:
+Predicted Disease: {disease}
+Patient Symptoms: {symptoms}
 
-**Predicted Disease:** {disease}
-**Patient Symptoms:** {symptoms}
-
-Provide clinical guidelines and standard-of-care information in the following JSON format:
-
+Return a structured JSON response:
 {{
     "disease": "{disease}",
-    "icd_code": "ICD-10 code if known (e.g., J18.9 for Pneumonia)",
-    "classification": "How this disease is classified/staged",
+    "icd_code": "ICD-10 code (e.g., J18.9)",
+    "classification": "Classification or staging criteria for {disease}",
     "diagnostic_criteria": [
-        "Criterion 1 for definitive diagnosis",
-        "Criterion 2 for definitive diagnosis"
+        "Key diagnostic criterion 1",
+        "Key diagnostic criterion 2"
     ],
     "standard_of_care": {{
-        "mild_cases": "Treatment protocol for mild presentations",
-        "moderate_cases": "Treatment protocol for moderate presentations",
-        "severe_cases": "Treatment protocol for severe presentations"
+        "mild_cases": "Protocol for mild presentation",
+        "moderate_cases": "Protocol for moderate presentation",
+        "severe_cases": "Protocol for severe presentation"
     }},
     "guideline_sources": [
         {{
-            "organization": "Name of guideline body (e.g., WHO, NICE, AHA)",
-            "guideline_name": "Name of the specific guideline",
-            "key_recommendation": "Primary recommendation from this guideline"
+            "organization": "e.g., WHO, NICE",
+            "guideline_name": "Specific guideline title",
+            "key_recommendation": "Main takeaway"
         }}
     ],
-    "risk_factors": ["Risk factor 1", "Risk factor 2"],
-    "prognosis": "General prognosis and expected outcomes with proper treatment",
-    "prevention": "Preventive measures to reduce risk of occurrence or recurrence",
-    "red_flags": ["Warning sign 1 that requires urgent attention", "Warning sign 2"]
+    "risk_factors": ["risk factor 1", "risk factor 2"],
+    "prognosis": "Expected outcomes with proper care",
+    "prevention": "Preventive measures",
+    "red_flags": ["Critical warning signs for {disease}"]
 }}
 
-Ensure all guidelines are evidence-based. Cite specific organizations where possible.
+Ensure all information is evidence-based and specific to {disease}.
 """
 
     def _get_output_schema_description(self) -> str:

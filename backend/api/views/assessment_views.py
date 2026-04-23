@@ -16,6 +16,7 @@ def ocr_extract_view(request):
     """
     Unified endpoint to handle medical report uploads and manual symptom input together.
     Returns extracted text and cleaned symptoms via OpenRouter.
+    
     """
     file_obj = request.FILES.get('file')
     manual_symptoms = request.data.get('symptoms', '')
@@ -48,18 +49,36 @@ def ocr_extract_view(request):
         input_for_extraction = f"Manual: {manual_symptoms}\nReport: {extracted_text}"
         
         try:
-            # We use the same service but with a "cleanup" flavor
-            analysis = openrouter_service.analyze_medical_condition(manual_symptoms, extracted_text)
-            # We only need a summary list for the 'extracted_symptoms' field for now
-            # but we can also return the whole analysis if the user wants it early.
-            ocr_symptoms = analysis.get('condition_analysis', '')[:200] # Just a snippet
+            # We use the new validated symptoms extraction
+            analysis = openrouter_service.extract_validated_symptoms(input_for_extraction)
+            
+            # If it's valid, we return the parsed valid symptoms joined as a string for frontend compat.
+            if analysis.get('status') == 'valid' and analysis.get('valid_symptoms'):
+                ocr_symptoms = ", ".join(analysis['valid_symptoms'])
+            else:
+                # If invalid, fallback to either prediction or manual
+                valid_ones = analysis.get('valid_symptoms', [])
+                if valid_ones:
+                    ocr_symptoms = ", ".join(valid_ones)
+                else:
+                    ocr_symptoms = manual_symptoms
+                # Add invalid warning if there are any
+                if analysis.get('invalid_symptoms'):
+                    inv_sympts = ", ".join(analysis['invalid_symptoms'])
+                    if extraction_warning:
+                        extraction_warning += f" Some symptoms were unrecognized: {inv_sympts}"
+                    else:
+                        extraction_warning = f"Unrecognized symptoms: {inv_sympts}"
+
         except Exception as llm_error:
             print(f"LLM Extraction failed: {llm_error}")
             ocr_symptoms = manual_symptoms
+            analysis = None
 
         return Response({
             'raw_text': extracted_text,
             'extracted_symptoms': ocr_symptoms,
+            'validation_data': analysis,
             'warning': extraction_warning,
             'message': 'Data processed successfully'
         })
@@ -175,7 +194,7 @@ def get_assessment_history(request):
     
     try:
         history_stream = firebase_service.collection('history').where('user_id', '==', user_id).stream()
-        history = [doc.to_dict() for doc in history_stream]
+        history = history_stream
         
         # Sort by timestamp
         history.sort(key=lambda x: x.get('timestamp', ''), reverse=True)

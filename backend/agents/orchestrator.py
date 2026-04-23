@@ -56,7 +56,9 @@ class MedicalAgentOrchestrator:
 
     def run(self, disease: str, symptoms: str = "") -> Dict[str, Any]:
         """
-        Execute all 4 agents in parallel for the given disease.
+        Execute all 4 agents in parallel using ThreadPoolExecutor.
+        Each agent runs on its own thread to maximize throughput and utilizes
+        its own unique API key and model as configured in the .env file.
 
         Args:
             disease:  The disease name predicted by the NN model.
@@ -71,29 +73,44 @@ class MedicalAgentOrchestrator:
         results = {}
         errors = {}
 
-        # Run all agents concurrently
+        # Map internal keys to agent instances
+        agent_tasks = {
+            "recommendation": self._agents.get("recommendation"),
+            "treatment_exploration": self._agents.get("treatment_exploration"),
+            "clinical_guidelines": self._agents.get("clinical_guidelines"),
+            "lifestyle_and_diet": self._agents.get("lifestyle_and_diet"),
+        }
+
+        print(f"DEBUG: Starting 4 agents in parallel for disease: {disease}")
+
         with ThreadPoolExecutor(max_workers=4) as executor:
+            # Submit all agent tasks
             future_to_name = {
                 executor.submit(agent.run, disease, symptoms): name
-                for name, agent in self._agents.items()
+                for name, agent in agent_tasks.items() if agent
             }
 
+            # Process results as they complete
             for future in as_completed(future_to_name):
-                agent_name = future_to_name[future]
+                name = future_to_name[future]
                 try:
-                    results[agent_name] = future.result()
+                    data = future.result()
+                    results[name] = data
                 except Exception as e:
-                    errors[agent_name] = {
+                    print(f"DEBUG: Agent [{name}] FAILED concurrently: {str(e)}")
+                    agent_instance = agent_tasks.get(name)
+                    errors[name] = {
                         "error": str(e),
-                        "agent_name": agent_name,
-                        "medical_disclaimer": self._agents[agent_name].DISCLAIMER,
+                        "agent_name": name,
+                        "medical_disclaimer": getattr(agent_instance, 'DISCLAIMER', self.GLOBAL_DISCLAIMER),
                     }
 
         elapsed = round(time.time() - start_time, 2)
+        print(f"DEBUG: Parallel execution completed in {elapsed}s")
 
         # Build unified response
         response = {
-            "status": "completed" if not errors else "partial",
+            "status": "completed" if not errors else ("partial" if results else "failed"),
             "predicted_disease": disease,
             "symptoms_analyzed": symptoms,
             "processing_time_seconds": elapsed,
